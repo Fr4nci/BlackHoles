@@ -1,0 +1,99 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PACKAGE IMPORTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\usepackage[tmargin=2cm,bmargin=2cm,footskip=.2in, rmargin=1.5in,lmargin=1.5in, margin=0.85in, a4paper]{geometry}
+\usepackage{bookmark}
+\usepackage{libertinus}
+\usepackage{amsmath,amsfonts,amsthm,amssymb,mathtools}
+\usepackage[varbb]{newpxmath}
+%\usepackage[libertine]{newtxmath}
+\usepackage{chemfig}
+\usepackage{ragged2e}
+\usepackage{xfrac}
+\usepackage{mhchem}
+\usepackage[italian]{babel}
+\usepackage[Sonny]{fncychap}
+\usepackage[makeroom]{cancel}
+\usepackage{mathtools}
+\usepackage{listing}
+\usepackage{enumitem}
+\usepackage{hyperref,theoremref}
+\hypersetup{
+	pdftitle={Simulare buchi neri},
+	colorlinks=true, linkcolor=doc!90,
+	bookmarksnumbered=true,
+	bookmarksopen=true,
+	pdfauthor={Francesco Sermi}
+}
+\usepackage[most,many,breakable]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{varwidth}
+\usepackage{varwidth}
+\usepackage{etoolbox}
+%\usepackage{authblk}
+\usepackage{nameref}
+\usepackage{multicol,array}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{tikz-3dplot}
+\usepackage{tikz}
+\usetikzlibrary{3d,decorations.pathmorphing}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{import}
+\usepackage{xifthen}
+\usepackage{pdfpages}
+\usepackage{transparent}
+
+\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
+\SetCommentSty{mycommfont}
+\newcommand{\incfig}[1]{%
+    \def\svgwidth{\columnwidth}
+    \import{./figures/}{#1.pdf_tex}
+}
+
+\usepackage{tikzsymbols}
+\usepackage{float}
+\usepackage[toc]{appendix}
+\renewcommand\qedsymbol{$\square$}
+\usepackage{hyperref}
+\usepackage{mwe}
+\usepackage{fancyhdr}
+\usepackage{pgfplots}
+\usepackage{bm}
+\usepackage{dsfont}
+%\usepackage{import}
+%\usepackage{xifthen}
+%\usepackage{pdfpages}
+%\usepackage{transparent}
+\definecolor{doc}{RGB}{0,0,0}
+\theoremstyle{definition}
+\newtheorem{definition}{Definizione}[section]
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Teorema}[section]
+\theoremstyle{definition}
+\newtheorem{cor}{Corollario}[theorem]
+\theoremstyle{definition}
+\newtheorem{lemma}{Lemma}[theorem]
+\theoremstyle{plain}
+\newtheorem{exercise}{Esercizio}[section]
+\theoremstyle{definition}
+\newtheorem{prop}{Proposizione}[section]
+
+\theoremstyle{definition}
+\newtheorem{example}{Esempio}[section]
+
+\theoremstyle{definition}
+\newtheorem{axiom}{Assioma}[section]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Oss:}
+
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+		\node[shape=circle,draw,inner sep=1pt] (char) {#1};}}
+\newcommand{\innerprod}[2]{\langle #1, #2 \rangle}
+\renewcommand\appendixpagename{Appendici}
+\renewcommand\appendixtocname{Appendici}
+\setcounter{localmathalphabets}{0}

@@ -1,0 +1,340 @@
+\documentclass[12pt, twoside, italian]{article}
+\input{h_preamble/new_preamble}
+\input{h_preamble/letterfonts}
+\input{h_preamble/macros}
+\usepackage{fancyhdr}
+\usepackage{titlesec}  % Opzionale, per controllo avanzato sui titoli
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\pagestyle{fancy}
+
+% Definizione dell'intestazione per pagine dispari (Odd)
+\fancyhead[LO]{\textbf{\thepage}}  % Numero di pagina in grassetto a sinistra
+\fancyhead[RO]{\nouppercase\leftmark}         % Capitolo e sezione a destra
+
+% Definizione dell'intestazione per pagine pari (Even)
+\fancyhead[LE]{\nouppercase\rightmark}          % Capitolo e sezione a sinistra
+\fancyhead[RE]{\textbf{\thepage}}  % Numero di pagina in grassetto a destra
+
+% Cancella il footer
+\fancyfoot{}
+\setlength{\headheight}{14.49998pt}
+\addtolength{\topmargin}{-2.49998pt}
+% Personalizzazione della linea orizzontale
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\pgfplotsset{compat=newest}
+\title{Simulare buchi neri}
+\author{Francesco Sermi}
+\date{\today}
+\pgfplotsset{
+	compat = newest,
+	colormap/violet % se si vuole cambiare il colormap utilizzato per generare i grafici, tuttavia la copertina ha un colormap a
+					% parte che va modificato qua sotto. Se si stampa non a colori consiglio blackwhite come colormap
+	}
+\renewcommand{\appendixpage}{}
+\begin{document}
+	%\begin{titlepage}
+	%\centering
+	%\vspace*{3cm}
+	%{\huge\bfseries Appunti di Geometria e Algebra Lineare \par}
+	%\vspace{2cm}
+	%{\Large\itshape Francesco Sermi\par}
+	%\vfill
+	%\begin{figure}[H]
+	%	\centering
+	%	\includegraphics[width=0.65\textwidth]{immagini/dejong.png}
+	%\end{figure}
+    	%\begin{tikzpicture}
+	% Definisco lo stile dei vettori
+    	%\tikzset{vector/.style={-stealth, thick, color=black}}
+
+    % Parametri per il punto di contatto
+    	%\def\xo{1}
+    	%\def\yo{2}
+    	%\def\zo{5} % Calcola z0 = f(x0, y0)
+
+    % Derivate parziali della funzione f(x, y) = x^2 + y^2 nel punto (x0, y0)
+    	%\def\fx{2*\xo} % = 2
+    	%\def\fy{2*\yo} % = 4
+
+    % Disegno la superficie
+    	%\begin{axis}[
+    	%    width=12cm,
+    	%    view={60}{30}, % Angolazione impostata
+    	%    axis lines=middle,
+    	%    zlabel={$f(x,y)$},
+    	%    clip=false,
+    	%    domain=-5:5,
+    	%    y domain=-5:5,
+    	%    samples=30,
+    	%    colormap/viridis,
+    	%    z buffer=sort
+    	%]
+
+    % Grafico della superficie con colore visibile
+    	%\addplot3[surf, opacity=0.8, shader=interp]
+    	%    {x^2 - y^2}; % Superficie f(x, y) = x^2 + y^2
+    	%\end{axis}
+	%\end{tikzpicture}
+	%\vfill	
+	%\end{titlepage}
+	%\pagestyle{empty}
+	%\vspace*{\fill}
+    %Appunti di Geometria e Algebra Lineare  © 2025 by Francesco Sermi is licensed under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-nd/4.0/
+	%\cleardoublepage
+	%\vspace*{8cm}
+	\maketitle
+	
+	Lo scopo di questo breve (o almeno spero) documento è quello di riportare in forma abbastanza elegante tutti i risultati matematici e spiegazioni necessarie per simulare un buco nero in Python (o in C++ se vedo che non è possibile). 
+	
+	\section{Requisiti matematicosi}
+
+	Il punto di partenza è sicuramente la metrica di Schwarzschild
+	$$
+		ds^2 = -(1 - \frac{2GM}{r})dt^2 + (1 - \frac{2GM}{r})^{-1}dr^2 + r^2(d\theta^2 + \sin^2{\theta}d\phi^2),
+	$$
+	da cui segue che il nostro tensore metrico
+	$$
+		g_{\mu \nu} = \begin{pmatrix}
+			-(1 - \frac{2GM}{r}) & 0 & 0 & 0 \\
+			0 & (1-\frac{2GM}{r})^{-1} & 0 & 0 \\
+			0 & 0 & r^2 & 0 \\
+			0 & 0 & 0 & r^2 \sin^2{\theta}
+		\end{pmatrix}
+	$$
+	Visto che tengo alla mia sanità mentale, vorrei, innanzitutto, introdurre la notazione di Einstein che mi permetterà di snellire particolarmente le formule: se abbiamo per esempio due vettori, $v$ e $w$, le cui componenti verranno indicate con $v^\mu$ e $w^\mu$ rispettivamente, avremo che scrivere
+	$$
+		v^\mu w_\mu,
+	$$
+	dove abbiamo un indice ripetuto indica che abbiamo una sommatora non esplicita su tale indice, dunque
+	$$
+		v^\mu w_\mu = \sum_{\mu=0}^3 v^\mu w_\mu = v^0 w_0 + v^1 w_1 + v^2 w_2 + v^3 w_3.
+	$$
+	In accordo con la letteratura, diremo che un oggetto con un indice in alto trasforma in maniera \emph{controvariante} altrimenti trasforma in maniera \emph{covariante}:
+	\begin{definition}[trasformazioni covarianti e controvarianti]
+		Diremo che un oggetto $v$ che da un sistema di riferimento ad un altro (con jacobiano $\xi^\mu_\nu = \frac{\partial (x')^\mu}{\partial x^\nu}$) trasforma in maniera controvariante se
+		$$
+			(v')^\mu = \xi^\mu_\nu v^\nu,
+		$$
+		e gli posizioneremo l'indice in alto. Altrimenti, diremo che trasforma in maniera covariante se
+		$$
+			(v')_\mu = \xi^\nu_\mu v_\nu,
+		$$
+		e gli posizioneremo l'indice in basso.
+	\end{definition}
+	Chiaramente esistono degli oggetti con più indici: i tensori, che possono avere $p$ indici in alto e $q$ indici in basso, che sono delle applicazioni che mappano $p$ vettori e $q$ covettori (funzionali) in un numero\footnote{si possono dare anche altre definizioni (su varietà per esempio), ma ci vogliamo tenere sul semplice.},
+	$$
+		\Lambda^{\alpha_1, \ldots, \alpha_p}_{\beta_1, \ldots, \beta_q},
+	$$
+	che trasforma come segue
+	$$
+		(\Lambda')^{\mu_1, \ldots, \mu_p}_{\nu_1, \ldots, \nu_q} = \xi^{\mu_{1}}_{\alpha_1} \xi^{\mu_{2}}_{\alpha_2} \ldots \xi^{\mu_p}_{\alpha_p} \xi^{\beta_1}_{\nu_1} \xi^{\beta_2}_{\nu_2} \ldots \xi^{\nu_q}_{\beta_q} \Lambda^{\alpha_1, \ldots, \alpha_p}_{\beta_1, \ldots, \beta_q}.
+	$$
+	Abbiamo che i simboli di Christoffel in questa metrica sono dati da
+	\begin{align*}
+		&\Gamma^{\sigma}_{\mu \nu} = \frac{1}{2}g^{\sigma \rho}(\partial_{\mu} g_{\nu \rho} + \partial_{\nu} g_{\rho \mu} - \partial_\rho g_{\mu \nu}), &  &\partial_\mu = \frac{\partial}{\partial x^\mu},
+	\end{align*}
+	Facendo il conto\footnote{si potrebbe anche pensare di fare noi stessi il conto, ma voglio alleggerire il carico di lavoro al mio povero PC, quindi si fa analiticamente il conto} (facendolo fare a Wolfram Mathematica) si vede che
+	\begin{align*}
+		&\Gamma^\phi_{ij} = \begin{pmatrix}
+			0 & 0 & 0 & 0 \\
+			0 & 0 & 0 & \frac{1}{r} \\
+			0 & 0 & 0 & \cot{\theta} \\
+			0 & \frac{1}{r} & \cot{\theta} & 0 
+		\end{pmatrix}, & &\Gamma^{\theta}_{ij} = \begin{pmatrix}
+			0 & 0 & 0 & 0 \\
+			0 & 0 & \frac{1}{r} & 0 \\
+			0 & \frac{1}{r} & 0 & 0 \\
+			0 & 0 & 0 & -\cos{\theta}\sin{\theta}
+		\end{pmatrix}, \\
+		&\Gamma^{r}_{ij} = \begin{pmatrix}
+			0 & \frac{GM}{r^2}(1-\frac{2GM}{r})^{-1} & 0 & 0 \\
+			\frac{GM}{r^2}(1-\frac{2GM}{r})^{-1} & 0 & 0 & 0 \\
+			0 & 0 & 0 & 0 \\
+			0 & 0 & 0 & 0
+		\end{pmatrix}
+	\end{align*}
+	\begin{definition}[metrica singolare]
+		Diremo che una metrica è singolare se $\exists x \in M$ con $M$ varietà riemmaniana tale che $g_{\mu \nu}$ non è definito.
+	\end{definition}
+	Vediamo che la metrica di Schwarzschild non è ben definita se $r = 2GM$ e per $r = 0$: la quantità $r_S = 2GM$ verrà indicata con \emph{raggio di Schwarzschild}.
+	Da Geometria differenziale sappiamo che le geodetiche\footnote{presi due punti $p, q$ distinti su una varietà, esiste un'unica curva (che chiamiamo \emph{geodetica}) di lunghezza minima che collega i due punti.} rispettano la seguente equazione:
+	\begin{align}
+		&\frac{\partial^2 x^\mu}{\partial t^2} + \frac{\partial x^i}{\partial t} \frac{\partial x^j}{\partial t} \Gamma^k_{ij} = 0.
+	\end{align}
+	Quindi, il nostro scopo, sarà quello di generare un oggetto molto massivo (er buco nero) e andare ad integrare numericamente queste equazioni per ricostruire il percorso della luce: chiarissimo, no? Detto questo, veniamo alla scelta dell'integratore: visto che ancora non so
+	niente perché ancora non ho ancora "messo le mani in pasta" (ovvero non so ancora quanto sia brutta effettivamente l'equazione, che dev'essere ancora discretizzata), effettuerò un bellissimo \emph{educated guess} e userò l'integratore Runge-Kutta. Il primo step che dobbiamo impiegare
+	è quello di costruire una funzione che ci calcola il tensore metrico per ogni punto considerado
+	\begin{lstlisting}[language=Python]
+def schwarzschild_metric(position){
+	rs = 1
+	r = position[1]
+	theta = position[2]
+	g = np.zeroes(shape=[4, 4])
+	g[0][0] = -(1-rs/r)
+	g[1][1] = 1/(1-rs/r)
+	g[2][2] = r*r
+	g[3][3] = r * r * np.sin(theta) * np.cos(theta)
+	return g
+}
+	\end{lstlisting}
+	Successivamente bisogna calcolare le tetradi: localmente, lo spazio curvo deve assomigliare ad uno spazio euclideo, quindi bisogna calcolare i vettori di base dello spazio euclideo "curvati" dalla curvatura dello spazio-tempo: nel caso della metrica di Schwarzschild, abbiamo che questi valori sono già noti in letteratura e risultano essere pari a
+	\begin{align}
+		&e_0 = (\frac{1}{\sqrt{1-r_s/r}}, 0, 0, 0) \\
+		&e_1 = (0, \frac{1}{\sqrt{1-r_s/r}}, 0, 0) \\
+		&e_2 = (0, 0, \frac{1}{r}, 0) \\
+		&e_3 = (0, 0, 0, \frac{1}{r\sin{\theta}}).
+	\end{align}
+	\begin{lstlisting}[language=Python]
+def schwarzschild_tetrad(position):
+	rs = 1
+	r = position[1]
+	theta = position[2]
+	e0 = np.array([1/(np.sqrt(1-(rs/r))), 0, 0, 0])
+	e1 = np.array([0, 1/np.sqrt(1-rs/r)], 0, 0)
+	e2 = np.array([0, 0, 1/r, 0])
+	e3 = np.array([0, 0, 0, 1/(r * np.sin(theta))])
+	return np.array([e0, e1, e2, e3])
+\end{lstlisting}
+	Ora, noi vogliamo vedere tutto questo da una bella camera, dunque dobbiamo convertire i nostri dati proiettandoli su uno schermo: per fare questo si fa un pochino di trigonometria (che vi risparmio, perché geometria euclidea mi fa schifo, bensì la fucking geometria non euclidea mi garba un mondo): si converte il FOV in radianti per poi calcolare la distanza massima rispetto al piano di proiezione (la camera) sapendo che
+	$$
+		d = \frac{l}{2\tan{\frac{\text{fov}}{2}}},
+	$$
+	per quanto riguarda le posizioni $(x, y)$, abbiamo che se posizioniamo il nostro \emph{Super massive Black Hole} nell'origine e prendiamo il sistema di riferimento da cui prendere le misure lì allora
+	\begin{align*}
+		&x = s_x - \frac{l_x}{2}, \\
+		&y = s_y - \frac{l_y}{2}.
+	\end{align*}
+	Una volta che ci siamo calcolati la direzione del vettore, andiamo a normalizzarlo.
+\end{document}
+Andiamo alle geodetiche: per adesso proviamo ad integrarle direttamente
+\begin{lstlisting}
+def geodetic(position, direction, tetrads):
+	g = {
+		"position": [],
+		"velocity": [0, 0, 0, 0]
+	}
+	g = tetrads[0] * -1 + tetrads[1] * direction[0] + tetrads[2] * direction[1] + tetrads[3] * direction[2]
+	return g
+\end{lstlisting}
+Infine si scrive una funzione che mi dà i simbolozzi di Christoffel e mi integra
+\begin{lstlisting}
+	#-------------------------------------------
+# Numerical derivative: central difference
+#-------------------------------------------
+def diff(func, position, direction):
+    h = 1e-5
+    p_up = position.copy()
+    p_lo = position.copy()
+
+    p_up[direction] += h
+    p_lo[direction] -= h
+
+    return (func(p_up) - func(p_lo)) / (2 * h)
+
+
+#--------------------------------------------------
+# Compute Christoffel symbols Γ^μ_{αβ}
+# get_metric : function(position) → 4×4 metric
+#--------------------------------------------------
+def calculate_christoff2(position, get_metric):
+    g = get_metric(position)                # g_{μν}
+    g_inv = np.linalg.inv(g)                # g^{μν}
+
+    metric_diff = np.zeros((4, 4, 4))       # ∂_i g_{jk}
+
+    # Compute derivatives of metric in all 4 directions
+    for i in range(4):
+        differentiated = diff(get_metric, position, i)   # 4×4 matrix
+        for j in range(4):
+            for k in range(4):
+                metric_diff[i, j, k] = differentiated[j, k]
+
+    # Christoffel symbols Γ^μ_{αβ}
+    Gamma = np.zeros((4, 4, 4))
+
+    for mu in range(4):
+        for al in range(4):
+            for be in range(4):
+                s = 0.0
+                for sigma in range(4):
+                    s += 0.5 * g_inv[mu, sigma] * (
+                        metric_diff[be, sigma, al]
+                        + metric_diff[al, sigma, be]
+                        - metric_diff[sigma, al, be]
+                    )
+                Gamma[mu, al, be] = s
+
+    return Gamma
+
+
+#-------------------------------------------------------
+# Geodesic equation: a^μ = - Γ^μ_{αβ} v^α v^β
+#-------------------------------------------------------
+def calculate_acceleration_of(X, v, get_metric):
+    Gamma = calculate_christoff2(X, get_metric)
+    a = np.zeros(4)
+
+    for mu in range(4):
+        s = 0.0
+        for al in range(4):
+            for be in range(4):
+                s += -Gamma[mu, al, be] * v[al] * v[be]
+        a[mu] = s
+
+    return a
+
+
+#-------------------------------------------------------
+# Schwarzschild specialization
+#-------------------------------------------------------
+def calculate_schwarzschild_acceleration(X, v):
+    return calculate_acceleration_of(X, v, schwarzschild_metric)
+
+
+#-------------------------------------------------------
+# Integration result enum
+#-------------------------------------------------------
+class IntegrationResult:
+    ESCAPED = 0
+    EVENT_HORIZON = 1
+    UNFINISHED = 2
+
+    def __init__(self):
+        self.type = IntegrationResult.UNFINISHED
+
+
+#-------------------------------------------------------
+# Leapfrog integrate a geodesic
+# g.position and g.velocity = numpy arrays (4,)
+#-------------------------------------------------------
+def integrate(g, debug=False):
+    result = IntegrationResult()
+
+    dt = 0.005
+    rs = 1.0
+    start_time = g.position[0]
+
+    for _ in range(100000):
+        acceleration = calculate_schwarzschild_acceleration(g.position, g.velocity)
+
+        # Leapfrog step
+        g.velocity = g.velocity + acceleration * dt
+        g.position = g.position + g.velocity * dt
+
+        radius = g.position[1]
+
+        # Escape condition
+        if radius > 10.0:
+            result.type = IntegrationResult.ESCAPED
+            return result
+
+        # Event horizon or timeout
+        if radius <= rs + 1e-4 or g.position[0] > start_time + 1000:
+            result.type = IntegrationResult.EVENT_HORIZON
+            return result
+
+    return result
+\end{lstlisting}
