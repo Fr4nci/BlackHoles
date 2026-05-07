@@ -1,0 +1,17 @@
+============================================================
+DIAGNOSTICA GPU (CuPy)
+============================================================
+  GPU              : NVIDIA GeForce RTX 3050 Laptop GPU
+  Compute cap.     : 8.6
+  VRAM libera      : 3678 MB / 3770 MB
+  Memoria stimata  : texture=24.0 MB + output=2.6 MB
+  OK: VRAM sufficiente
+  CuPy version     : 14.0.1
+============================================================
+
+Caricamento texture: nasa3.jpg -> 2048x1024
+  shape=(1024, 2048, 3), size=24.0 MB
+Trasferimento texture su GPU...
+  OK — shape GPU: (1024, 2048, 3)
+
+Compilazione kernel CUDA (NVRTC, no nvcc richiesto)...
